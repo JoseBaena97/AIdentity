@@ -2,22 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TONOS, TONO_POR_DEFECTO } from "@/lib/tonos";
+import Particulas from "./Particulas";
 
 const MAX_HISTORIAL = 3;
 const LADO_MAXIMO = 1600; // px: reducimos la imagen antes de enviarla para ganar velocidad
-
-const ICONOS_CATEGORIA = {
-  comida: "🍽️",
-  paisaje: "🏞️",
-  meme: "😂",
-  "captura de pantalla": "🖥️",
-  persona: "🧑",
-  animal: "🐾",
-  objeto: "📦",
-  documento: "📄",
-  arte: "🖼️",
-  otro: "✨",
-};
 
 const REDES = [
   {
@@ -122,152 +110,246 @@ export default function Home() {
     cargarArchivo(e.dataTransfer.files?.[0]);
   };
 
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:py-16">
-      <header className="mb-10 text-center">
-        <h1 className="bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-amber-200 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-          AIdentity
-        </h1>
-        <p className="mt-3 text-zinc-400">
-          Suelta una imagen y una IA multimodal la clasificará, la etiquetará y te dirá lo que piensa de ella.
-        </p>
-      </header>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Columna izquierda: entrada */}
-        <section className="space-y-4">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => inputRef.current?.click()}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setArrastrando(true);
-            }}
-            onDragLeave={() => setArrastrando(false)}
-            onDrop={alSoltar}
-            className={`relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all ${
-              arrastrando
-                ? "scale-[1.01] border-fuchsia-400 bg-fuchsia-500/10"
-                : "border-zinc-700 bg-zinc-900/60 hover:border-zinc-500"
-            }`}
-          >
-            {imagen ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imagen.preview} alt="Vista previa" className="h-full w-full object-contain" />
-            ) : (
-              <div className="px-6 text-center text-zinc-400">
-                <div className="mb-3 text-5xl">📸</div>
-                <p className="font-medium text-zinc-200">Arrastra una imagen aquí</p>
-                <p className="mt-1 text-sm">o haz clic para elegirla · también puedes pegarla con Ctrl+V</p>
-              </div>
-            )}
-            {cargando && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-zinc-950/70 backdrop-blur-sm">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-fuchsia-400 border-t-transparent" />
-                <p className="text-sm text-zinc-300">La IA está mirando tu imagen…</p>
-              </div>
-            )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                cargarArchivo(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-            />
+    <div className="flex min-h-screen flex-col">
+      <Particulas activo={cargando} />
+      <nav className="sticky top-0 z-10 border-b border-zinc-200 bg-white/70 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/70">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icon.png" alt="" className="h-6 w-6 rounded-md" />
+            <span className="text-sm font-semibold tracking-tight">AIdentity</span>
           </div>
+          <div className="flex items-center gap-4">
+            <Redes />
+            <BotonTema />
+          </div>
+        </div>
+      </nav>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex-1">
-              <span className="sr-only">Tono del comentario</span>
-              <select
-                value={tono}
-                onChange={(e) => setTono(e.target.value)}
-                className="h-12 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 text-zinc-100 outline-none focus:border-fuchsia-400"
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:py-20">
+        <header className="mb-12 max-w-3xl">
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">Clasifica cualquier imagen con IA.</h1>
+          <p className="mt-4 text-lg text-zinc-500 dark:text-zinc-400">
+            Sube una foto y un modelo multimodal la etiqueta, la describe y te da su opinión.
+          </p>
+        </header>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Columna izquierda: entrada */}
+          <section className="space-y-4">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && inputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setArrastrando(true);
+              }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={alSoltar}
+              className={`relative flex aspect-[4/3] cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-colors ${
+                arrastrando
+                  ? "border-zinc-900 bg-zinc-100 dark:border-zinc-100 dark:bg-zinc-900"
+                  : imagen
+                    ? "border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900"
+                    : "border-dashed border-zinc-300 bg-zinc-50 hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-500"
+              }`}
+            >
+              {imagen ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imagen.preview} alt="Vista previa" className="h-full w-full object-contain" />
+              ) : (
+                <div className="px-6 text-center">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mx-auto mb-4 h-8 w-8 text-zinc-400"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+                  <p className="text-sm font-medium">Arrastra una imagen o haz clic</p>
+                  <p className="mt-1 text-sm text-zinc-500">También puedes pegarla con Ctrl+V</p>
+                </div>
+              )}
+              {cargando && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm dark:bg-zinc-950/80">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100" />
+                  <p className="text-sm text-zinc-500">Analizando…</p>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  cargarArchivo(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div
+                role="radiogroup"
+                aria-label="Tono del comentario"
+                className="grid flex-1 grid-cols-3 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900"
               >
                 {Object.entries(TONOS).map(([clave, { etiqueta }]) => (
-                  <option key={clave} value={clave}>
-                    {etiqueta}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              onClick={analizar}
-              disabled={!imagen?.blob || cargando}
-              className="h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-6 font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {cargando ? "Analizando…" : "Analizar imagen"}
-            </button>
-          </div>
-
-          {error && (
-            <p className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>
-          )}
-
-          {historial.length > 0 && (
-            <div>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Análisis recientes</h2>
-              <div className="grid grid-cols-3 gap-3">
-                {historial.map((entrada) => (
                   <button
-                    key={entrada.id}
-                    onClick={() => restaurar(entrada)}
-                    className={`group overflow-hidden rounded-xl border bg-zinc-900 text-left transition hover:border-fuchsia-400 ${
-                      resultado === entrada.resultado ? "border-fuchsia-400" : "border-zinc-800"
+                    key={clave}
+                    role="radio"
+                    aria-checked={tono === clave}
+                    onClick={() => setTono(clave)}
+                    className={`rounded-md px-2 py-1.5 text-sm transition ${
+                      tono === clave
+                        ? "bg-white font-medium shadow-sm dark:bg-zinc-800"
+                        : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
                     }`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={entrada.preview} alt="" className="aspect-square w-full object-cover" />
-                    <p className="truncate px-2 py-1.5 text-xs text-zinc-300">
-                      {ICONOS_CATEGORIA[entrada.resultado.categoria]} {entrada.resultado.titulo}
-                    </p>
+                    {etiqueta}
                   </button>
                 ))}
               </div>
+              <button
+                onClick={analizar}
+                disabled={!imagen?.blob || cargando}
+                className="h-10 rounded-lg bg-zinc-900 px-5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 sm:h-auto dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                {cargando ? "Analizando…" : "Analizar"}
+              </button>
             </div>
-          )}
-        </section>
 
-        {/* Columna derecha: resultado */}
-        <section className="min-h-[300px] rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-          {resultado ? (
-            <Resultado datos={resultado} />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center text-center text-zinc-500">
-              <div className="mb-3 text-4xl">🤖</div>
-              <p>Aquí aparecerá el análisis.</p>
-              <p className="mt-1 text-sm">Prueba con un plato de comida, un paisaje, un meme o una captura de un bug.</p>
-            </div>
-          )}
-        </section>
-      </div>
+            {error && (
+              <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+                {error}
+              </p>
+            )}
 
-      <footer className="mt-12 flex flex-col items-center gap-3 text-xs text-zinc-600">
-        <div className="flex items-center gap-4">
-          {REDES.map(({ nombre, url, icono }) => (
-            <a
-              key={nombre}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={nombre}
-              title={nombre}
-              className="text-zinc-500 transition hover:text-fuchsia-300"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5" aria-hidden="true">
-                <path d={icono} />
-              </svg>
-            </a>
-          ))}
+            {historial.length > 0 && (
+              <div className="pt-4">
+                <h2 className="mb-3 text-sm text-zinc-500">Recientes</h2>
+                <div className="grid grid-cols-3 gap-3">
+                  {historial.map((entrada) => (
+                    <button
+                      key={entrada.id}
+                      onClick={() => restaurar(entrada)}
+                      className={`overflow-hidden rounded-lg border text-left transition ${
+                        resultado === entrada.resultado
+                          ? "border-zinc-900 dark:border-zinc-100"
+                          : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                      }`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={entrada.preview} alt="" className="aspect-square w-full object-cover" />
+                      <p className="truncate px-2 py-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                        {entrada.resultado.titulo}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Columna derecha: resultado */}
+          <section className="min-h-[300px] rounded-xl border border-zinc-200 bg-white p-6 sm:p-8 dark:border-zinc-800 dark:bg-zinc-950">
+            {resultado ? (
+              <Resultado datos={resultado} />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <p className="text-sm font-medium">Sin resultados todavía</p>
+                <p className="mt-1 max-w-xs text-sm text-zinc-500">
+                  Prueba con un plato de comida, un paisaje, un meme o la captura de un bug.
+                </p>
+              </div>
+            )}
+          </section>
         </div>
-        <p>By Jose Baena | Next.js · Tailwind CSS · Google Gemini (visión multimodal)</p>
+      </main>
+
+      <footer className="border-t border-zinc-200 bg-white/70 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/70">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-3 px-4 py-6 text-xs text-zinc-500 sm:flex-row">
+          <p>Hecho por Jose Baena</p>
+          <p>Next.js · Tailwind CSS · Google Gemini</p>
+        </div>
       </footer>
-    </main>
+    </div>
+  );
+}
+
+function BotonTema() {
+  const [oscuro, setOscuro] = useState(false);
+
+  // El tema real lo fija el script de layout.jsx antes de hidratar; aquí solo lo leemos.
+  useEffect(() => setOscuro(document.documentElement.classList.contains("dark")), []);
+
+  const alternar = () => {
+    const nuevo = !oscuro;
+    setOscuro(nuevo);
+    document.documentElement.classList.toggle("dark", nuevo);
+    try {
+      localStorage.setItem("tema", nuevo ? "oscuro" : "claro");
+    } catch {}
+  };
+
+  return (
+    <button
+      onClick={alternar}
+      aria-label={oscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
+      title={oscuro ? "Tema claro" : "Tema oscuro"}
+      className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4"
+        aria-hidden="true"
+      >
+        {oscuro ? (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </>
+        ) : (
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        )}
+      </svg>
+    </button>
+  );
+}
+
+function Redes() {
+  return (
+    <div className="flex items-center gap-4">
+      {REDES.map(({ nombre, url, icono }) => (
+        <a
+          key={nombre}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={nombre}
+          title={nombre}
+          className="text-zinc-400 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+            <path d={icono} />
+          </svg>
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -275,45 +357,45 @@ function Resultado({ datos }) {
   const confianza = Math.round((datos.confianza ?? 0) * 100);
 
   return (
-    <article className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-indigo-500/15 px-3 py-1 text-sm font-medium capitalize text-indigo-200">
-          {ICONOS_CATEGORIA[datos.categoria]} {datos.categoria}
+    <article className="space-y-6">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <span className="rounded-full border border-zinc-200 px-2.5 py-0.5 font-medium capitalize dark:border-zinc-700">
+          {datos.categoria}
         </span>
-        <div className="flex items-center gap-2 text-xs text-zinc-400" title="Confianza de la clasificación">
-          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-zinc-800">
-            <div className="h-full bg-emerald-400" style={{ width: `${confianza}%` }} />
+        <div className="flex items-center gap-2 text-zinc-500" title="Confianza de la clasificación">
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+            <div className="h-full bg-zinc-900 dark:bg-zinc-100" style={{ width: `${confianza}%` }} />
           </div>
-          {confianza}%
+          <span className="font-mono">{confianza}%</span>
         </div>
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold text-white">{datos.titulo}</h2>
-        <p className="mt-2 text-zinc-400">{datos.descripcion}</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{datos.titulo}</h2>
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400">{datos.descripcion}</p>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {datos.etiquetas.map((etiqueta) => (
+            <span
+              key={etiqueta}
+              className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+            >
+              {etiqueta}
+            </span>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {datos.etiquetas.map((etiqueta) => (
-          <span key={etiqueta} className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
-            #{etiqueta}
-          </span>
-        ))}
+      <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h3 className="mb-2 text-xs font-medium text-zinc-500">{TONOS[datos.tono]?.etiqueta}</h3>
+        <p className="text-lg leading-relaxed">“{datos.comentario}”</p>
       </div>
 
-      <blockquote className="rounded-xl border-l-4 border-fuchsia-400 bg-fuchsia-500/10 p-4">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-fuchsia-300">
-          {TONOS[datos.tono]?.etiqueta}
-        </p>
-        <p className="italic text-zinc-100">“{datos.comentario}”</p>
-      </blockquote>
-
-      <div>
-        <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">Análisis técnico</h3>
-        <p className="text-sm leading-relaxed text-zinc-300">{datos.analisisTecnico}</p>
+      <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
+        <h3 className="mb-2 text-xs font-medium text-zinc-500">Análisis técnico</h3>
+        <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{datos.analisisTecnico}</p>
       </div>
 
-      <p className="text-right text-[11px] text-zinc-600">Modelo: {datos.modelo}</p>
+      <p className="font-mono text-[11px] text-zinc-400">{datos.modelo}</p>
     </article>
   );
 }
